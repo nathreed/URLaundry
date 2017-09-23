@@ -1,5 +1,5 @@
 # URLaundry
-Better web client for the UR LaundryAlert app
+Better web client for the UR LaundryAlert app. Live [here](http://laundry.martianpancake.com).
 
 ## Setup
 - Run `npm install` to install dependencies (just `nodejs-websocket`).  
