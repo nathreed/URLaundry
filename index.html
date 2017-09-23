@@ -10,7 +10,7 @@
 	<script>
 		var websocket;
 		function setupWS() {
-			websocket = new WebSocket("wss://**YOURWSSERVER**:**YOURWSPORT**")
+			websocket = new WebSocket("ws://**YOURWSSERVER**:**YOURWSPORT**")
   		websocket.onclose = function(evt) {console.log("Socket close"); websocket.onerror()}; //When it closes, try and reopen it every 3 seconds until we do
   		websocket.onmessage = function (evt) {onMessage(evt.data);};
   		websocket.onerror = function (evt) {console.log("Socket error"); setTimeout(function() {
