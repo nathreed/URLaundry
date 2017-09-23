@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>UR Laundry</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+	<script>
+		var websocket;
+		function setupWS() {
+			websocket = new WebSocket("wss://**YOURWSSERVER**:**YOURWSPORT**")
+  		websocket.onclose = function(evt) {console.log("Socket close"); websocket.onerror()}; //When it closes, try and reopen it every 3 seconds until we do
+  		websocket.onmessage = function (evt) {onMessage(evt.data);};
+  		websocket.onerror = function (evt) {console.log("Socket error"); setTimeout(function() {
+  			setupWS()
+        }, 3000)}; //Automatically try to reopen socket every 3 seconds
+		websocket.onopen = function(evt) {websocket.send("hello")};
+  	}
+
+  	function onMessage(data) {
+  		//Before we even start processing it, check if any tables are expanded and add their names to an array to be preserved
+  		var tablesData = ""
+  		data = JSON.parse(data)
+  		data.location.rooms.forEach(function(room) {
+		//Holds the info that will be in the particular tbody
+		var tableBody = ""
+		//Column titles are declared in the thead, so we get right to extracting machine info
+		var didError = false
+		room.machines.forEach(function(machine) {
+			//console.log("MACHINE", machine)
+			/*if(machine.description == "ROOM NOT REPORTING") {
+				didError = true
+				return; //Skip the room and go to the next
+			}*/
+			var tableRow = ""
+			//Column for machine number
+			tableRow += "<td>" + machine.port + "</td>"
+			//Column for type (description)
+			tableRow += "<td>" + machine.description + "</td>";
+			//Column for is available - first requires us to calculate time remaining
+			var minRemaining = parseInt(machine.timeRemaining);
+			if(minRemaining == 0) {
+				//The machine is available
+				tableRow += "<td>Yes</td>";
+			} else {
+				//The machine is not available
+				tableRow += "<td>No</td>";
+			}
+			//Column for time remaining
+			if(machine.timeRemaining == "Unknown") {
+				tableRow += "<td>Unknown</td>";
+			} else {
+				tableRow += "<td>" + minRemaining + "</td>";
+			}
+		
+			//Construct the final table row
+			//This depends on the status, so we need to determine that first
+			//We set it to the classes from bootstrap (success = green highlight, warning = yellow, danger=red) 
+			var status = "";
+			if(minRemaining == 0) {
+				status = "success"
+			} else if(minRemaining < 4) {
+				status = "warning"
+			} else {
+				status = "danger"
+			}
+			tableBody += "<tr class=" + status + ">" + tableRow + "</tr>"
+
+	})
+
+	if(didError) {
+		return; //Go to the next room, this one wasn't reporting
+	}
+	//Now that the table HTML has been created, place it in the appropriate table
+	//The table ids are all the same as room.name so that is how we will accomplish this
+	//$("#"+room.name+" tbody").html(tableBody)
+	//console.log("TBODY FOR ID", room.name);
+	//console.log(tableBody)
+
+	//First we need to find if the table was collapsed before
+	var classString = ""
+	//console.log($("table #"+room.id))
+	//If there is a table that was previously selected for preservation, set its class string accordingly
+	if($("table.collapse.in[name='" + room.name + "']").length == 1) {
+		//it was collapsed
+		//console.log("Found collapsed table with name", room.name)
+		//console.log($("table[name='" + room.name + "'][class=in]"))
+		classString = "table collapse in"
+	} else {
+		classString = "table collapse"
+	}
+	//console.log("CLASS STRING", classString)
+
+	var buttonData = "<button type='button' class='btn btn-info' style='margin:5px' data-toggle='collapse' data-target='#" + room.id + "'>" + room.name + "</button>"
+	var tableData = "<table name='" + room.name + "' class='" + classString + "' id='" + room.id + "'><thead><tr><td><h5>Machine Number</h5></td><td><h5>Machine Type</h5></td><td><h5>Is Available?</h5></td><td><h5>Time Remaining</h5></td></tr></thead><tbody>" + tableBody + "</tbody></table>";
+
+	var completeData = buttonData + tableData
+
+	tablesData += completeData
+
+	})
+
+  	$("#tables").html(tablesData)
+  	
+  	}
+
+  </script>
+</head>
+<body onload="setupWS()">
+	<div class="container">
+		<h2>UR Laundry</h2>
+		<p>Select a button to toggle visibility of the data for that laundry room.</p>
+		<div id="tables">
+		<p>Please wait for the data to load (up to 20 sec)
+		</div>
+	</div>
+</body>
+</html>
