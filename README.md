@@ -1,6 +1,8 @@
 # URLaundry
 Better web client for the UR LaundryAlert app. Live [here](http://laundry.martianpancake.com).
 
+The reason this has a client/server architecture instead of just having all the logic in a webpage is because the LaundryAlert API does not allow cross-domain GET requests, so they must be performed on the server and the data mirrored for this client.
+
 ## Setup
 
 - NOTE: This is only on the off-chance you want to run the server for yourself/make changes. If you really just want to see the data, you don't need to do this - just look at the URL above.
